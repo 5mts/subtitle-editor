@@ -25,7 +25,7 @@ interface SubtitleItemProps {
   editingSubtitleUuid: string | null;
   onScrollToRegion: (uuid: string) => void;
   setIsPlaying: (isPlaying: boolean) => void;
-  setPlaybackTime: (time: number) => void;
+  setPlaybackTime: (time: number, fromSubtitleUuid?: string) => void;
   setEditingSubtitleUuid: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
@@ -155,7 +155,7 @@ const SubtitleItem = memo(function SubtitleItem({
           tabIndex={-1}
           onClick={() => onScrollToRegion(subtitle.uuid)}
           onFocus={() => {
-            setPlaybackTime(timeToSeconds(subtitle.startTime));
+            setPlaybackTime(timeToSeconds(subtitle.startTime), subtitle.uuid);
           }}
           onKeyDown={(e) => {
             if (e.key === "Tab") {

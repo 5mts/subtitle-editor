@@ -45,10 +45,20 @@ const SubtitleList = forwardRef<SubtitleListRef, SubtitleListProps>(
     },
     ref
   ) => {
-    const t = useTranslations();
-    const listRef = useRef<HTMLDivElement>(null);
-    const activeSubtitleRef = useRef<string | null>(null);
-    // Get subtitles and actions from context
+  const t = useTranslations();
+  const listRef = useRef<HTMLDivElement>(null);
+  const activeSubtitleRef = useRef<string | null>(null);
+  const lastFocusFromSubtitleRef = useRef<string | null>(null);
+  
+  // Wrapper for setPlaybackTime that can track subtitle focus
+  const setPlaybackTimeWithTracking = (time: number, fromSubtitleUuid?: string) => {
+    if (fromSubtitleUuid) {
+      lastFocusFromSubtitleRef.current = fromSubtitleUuid;
+    }
+    setPlaybackTime(time);
+  };
+  
+  // Get subtitles and actions from context
     const {
       subtitles,
       mergeSubtitlesAction,
@@ -177,17 +187,38 @@ const SubtitleList = forwardRef<SubtitleListRef, SubtitleListProps>(
           container &&
           container.contains(subtitleElement)
         ) {
-          // If it's already near centered, skip extra scroll to avoid fighting cross-track jump
           const cRect = container.getBoundingClientRect();
           const iRect = subtitleElement.getBoundingClientRect();
-          const centerY = cRect.top + container.clientHeight / 2;
-          const itemCenterY = iRect.top + iRect.height / 2;
-          const offBy = Math.abs(itemCenterY - centerY);
-          if (offBy > 4) {
-            subtitleElement.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
+          
+          // Check if this was triggered by a subtitle focus
+          const wasFromSubtitleFocus = lastFocusFromSubtitleRef.current === currentSubtitle.uuid;
+          
+          if (wasFromSubtitleFocus) {
+            // Reset the focus tracking
+            lastFocusFromSubtitleRef.current = null;
+            
+            // For subtitle focus: only scroll if partially offscreen
+            const isPartiallyOffscreen = 
+              iRect.top < cRect.top || 
+              iRect.bottom > cRect.bottom;
+            
+            if (isPartiallyOffscreen) {
+              subtitleElement.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+              });
+            }
+          } else {
+            // For other sources (waveform, playback, arrow keys): center if far from center
+            const centerY = cRect.top + container.clientHeight / 2;
+            const itemCenterY = iRect.top + iRect.height / 2;
+            const offBy = Math.abs(itemCenterY - centerY);
+            if (offBy > 4) {
+              subtitleElement.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+            }
           }
           activeSubtitleRef.current = currentSubtitle.uuid;
         }
@@ -364,7 +395,7 @@ const SubtitleList = forwardRef<SubtitleListRef, SubtitleListProps>(
                 onScrollToRegion={onScrollToRegion}
                 setEditingSubtitleUuid={setEditingSubtitleUuid}
                 setIsPlaying={setIsPlaying}
-                setPlaybackTime={setPlaybackTime}
+                setPlaybackTime={setPlaybackTimeWithTracking}
               />
             );
           })}
