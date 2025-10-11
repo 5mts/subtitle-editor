@@ -286,7 +286,7 @@ const SubtitleItem = memo(function SubtitleItem({
             <div className="flex-1">
               {editingSubtitleUuid === subtitle.uuid ? (
                 <Textarea
-                  className="w-full px-2 h-4" // Adjust height as needed
+                  className="w-full p-2"
                   ref={textAreaRef} // Assign ref
                   value={editText}
                   onClick={(e) => e.stopPropagation()}
@@ -330,7 +330,7 @@ const SubtitleItem = memo(function SubtitleItem({
               ) : (
                 <button
                   type="button"
-                  className="w-full text-left text-lg cursor-pointer whitespace-pre-wrap break-words"
+                  className="w-full text-left p-2 border border-white/0 text-lg cursor-pointer whitespace-pre-wrap break-words"
                   tabIndex={0}
                   aria-label={subtitle.text ? `Edit subtitle: ${subtitle.text}` : "Edit subtitle (empty)"}
                   onClick={() => {
